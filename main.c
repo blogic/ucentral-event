@@ -23,7 +23,7 @@ static struct publisher {
 	int wildcard;
 	int raw;
 	bool enable;
-	char *filter;
+	char **filter;
 } publisher[] = {
 	{
 		.path = "hostapd.wlan",
@@ -87,14 +87,15 @@ publisher_match(const char *path)
 static int
 publisher_filter(struct publisher *pub, const char *method)
 {
-	char *filter = pub->filter;
+	char **filter = pub->filter;
 
-	if (!filter)
+	if (!*filter)
 		return 0;
 
 	while (*filter)
-		if (!strcmp(filter++, method))
+		if (!strcmp(*filter++, method))
 			return 0;
+
 	return -1;
 }
 
@@ -270,7 +271,7 @@ config_load_publisher(struct uci_section *s)
 	struct publisher *pub;
 	struct blob_attr *a;
 	int count = 0;
-	char *filter;
+	char **filter;
 	int rem;
 	blob_buf_init(&b, 0);
 	uci_to_blob(&b, s, &publisher_attr_list);
@@ -296,7 +297,7 @@ config_load_publisher(struct uci_section *s)
 	memset(filter, 0, count);
 	blobmsg_for_each_attr(a, tb[PUBLISHER_ATTR_FILTER], rem)
 		if (blobmsg_type(a) == BLOBMSG_TYPE_STRING) {
-			filter = strdup(blobmsg_get_string(a));
+			*filter = strdup(blobmsg_get_string(a));
 			filter++;
 		}
 }
@@ -307,7 +308,7 @@ config_load(void)
 	struct uci_context *uci = uci_alloc_context();
 	struct uci_package *package = NULL;
 
-	if (!uci_load(uci, "ucentral", &package)) {
+	if (!uci_load(uci, "event", &package)) {
 		struct uci_element *e;
 
 		uci_foreach_element(&package->sections, e) {
