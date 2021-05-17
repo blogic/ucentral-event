@@ -31,9 +31,8 @@ static struct publisher {
 		.wildcard = 1,
 	},
 	{
-		.path = "dhcpsnoop.",
+		.path = "dhcpsnoop",
 		.type = "dhcp",
-		.wildcard = 1,
 		.raw = 1,
 	},
 };
@@ -90,6 +89,9 @@ publisher_filter(struct publisher *pub, const char *method)
 	char **filter = pub->filter;
 
 	if (!*filter)
+		return 0;
+
+	if (!strcmp(*filter, "*"))
 		return 0;
 
 	while (*filter)
@@ -277,7 +279,7 @@ config_load_publisher(struct uci_section *s)
 	uci_to_blob(&b, s, &publisher_attr_list);
 	blobmsg_parse(publisher_attrs, __PUBLISHER_ATTR_MAX, tb, blob_data(b.head), blob_len(b.head));
 
-	if (!tb[PUBLISHER_ATTR_TYPE])
+	if (!tb[PUBLISHER_ATTR_TYPE] || !tb[PUBLISHER_ATTR_FILTER])
 		return;
 
 	pub = publisher_find(blobmsg_get_string(tb[PUBLISHER_ATTR_TYPE]));
@@ -286,8 +288,6 @@ config_load_publisher(struct uci_section *s)
 
 	ULOG_INFO("enabling %s events\n", pub->type);
 	pub->enable = true;
-	if (!tb[PUBLISHER_ATTR_FILTER])
-		return;
 
 	blobmsg_for_each_attr(a, tb[PUBLISHER_ATTR_FILTER], rem)
 		count++;
