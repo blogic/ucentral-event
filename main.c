@@ -20,6 +20,7 @@ static int verbose = 1;
 static struct publisher {
 	char *path;
 	char *type;
+	char *name;
 	int wildcard;
 	int raw;
 	bool enable;
@@ -28,11 +29,13 @@ static struct publisher {
 	{
 		.path = "hostapd.wlan",
 		.type = "wifi",
+		.name = "wifi-frames",
 		.wildcard = 1,
 	},
 	{
 		.path = "dhcpsnoop",
 		.type = "dhcp",
+		.name = "dhcp-snooping",
 		.raw = 1,
 	},
 };
@@ -126,7 +129,7 @@ subscriber_notify_cb(struct ubus_context *ctx, struct ubus_object *obj,
 	}
 
 	blob_buf_init(&b, 0);
-	blobmsg_add_string(&b, "event", sub->publisher->type);
+	blobmsg_add_string(&b, "event", sub->publisher->name);
 	c = blobmsg_open_table(&b, "payload");
 	if (!sub->publisher->raw)
 		d = blobmsg_open_table(&b, method);
