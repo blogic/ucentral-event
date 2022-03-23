@@ -111,6 +111,7 @@ subscriber_notify_cb(struct ubus_context *ctx, struct ubus_object *obj,
 {
 	struct ubus_subscriber *subscriber = container_of(obj, struct ubus_subscriber, obj);
 	struct subscriber *sub = container_of(subscriber, struct subscriber, subscriber);
+	struct ubus_request async = { };
 	struct blob_attr *a;
 	void *c, *d;
 	int rem;
@@ -139,7 +140,8 @@ subscriber_notify_cb(struct ubus_context *ctx, struct ubus_object *obj,
 		blobmsg_close_table(&b, d);
 	blobmsg_close_table(&b, c);
 
-	ubus_invoke(&conn.ctx, ucentral, "event", b.head, NULL, 0, 1000);
+	ubus_invoke_async(&conn.ctx, ucentral, "event", b.head, &async);
+	ubus_abort_request(&conn.ctx, &async);
 
 	return 0;
 }
